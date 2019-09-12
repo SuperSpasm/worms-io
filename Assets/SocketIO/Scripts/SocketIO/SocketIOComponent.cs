@@ -117,10 +117,7 @@ namespace SocketIO
 			#if SOCKET_IO_DEBUG
 			if(debugMethod == null) { debugMethod = Debug.Log; };
 			#endif
-		}
-
-		public void Start()
-		{
+			
 			if (autoConnect) { Connect(); }
 		}
 
