@@ -13,7 +13,7 @@ const WorldState = [];
 
 io.sockets.on('connection', function(socket) {
     console.log('New user connected.');
-    io.emit({
+    io.emit('game_start', {
         WorldState,
         Users
     });
