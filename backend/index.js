@@ -11,8 +11,6 @@ app.get('/', function(req, res) {
 
 const Users = [];
 const WorldState = [];
-const UserState = [];
-const Explosion = [];
 
 io.sockets.on('connection', function(socket) {
     console.log('New user connected.');
@@ -33,6 +31,14 @@ io.sockets.on('connection', function(socket) {
     socket.on('world_state', function(data) {
         WorldState.push(data);
         socket.broadcast.emit(WorldState);
+    });
+
+    socket.on('explosion', function(data) {
+        socket.broadcast.emit(data);
+    });
+
+    socket.on('user_state', function(data) {
+        socket.broadcast.emit(data);
     });
 
     socket.on('disconnect', function(username) {
