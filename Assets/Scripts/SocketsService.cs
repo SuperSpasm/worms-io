@@ -4,6 +4,26 @@ using LitJson;
 using SocketIO;
 using UnityEngine;
 
+
+#if UNITY_EDITOR
+using UnityEditor;
+
+[CustomEditor(typeof(SocketsService))]
+public class SocketsServiceEditor : Editor
+{
+    public override void OnInspectorGUI()
+    {
+        base.OnInspectorGUI();
+        var script = target as SocketsService;
+
+        if (GUILayout.Button("Connect to server"))
+        {
+            SocketsService.Connect();
+        }
+    }
+}
+#endif
+
 public class TestObject
 {
     public Vector2 TestVector;
@@ -14,7 +34,7 @@ public class SocketsService : MonoBehaviour
     [SerializeField] private SocketIOComponent _socket;
     private static SocketIOComponent _staticSocket;
     
-    public static event Action<WorldState> OnWorldStateUpdate;
+    public static event Action<WorldStateModel> OnWorldStateUpdate;
     public static event Action<UserStateModel> OnUserStateUpdate;
     public static event Action<ExplosionModel> OnExplosion;
 
@@ -27,6 +47,20 @@ public class SocketsService : MonoBehaviour
         _socket.On(TestReceiveEvent, ev =>
         {
             Debug.Log($"Received test data ({ev.name}): \n{ev.data.str}");
+        });
+    }
+    
+    public static void Connect()
+    {
+        _staticSocket.On("connection", ev =>
+        {
+            var json = ev.data.str;
+            Debug.Log($"OnConnection! Received: {json}");
+            var response = JsonMapper.ToObject<ConnectionResponseModel>(json);
+            Debug.Log($"Deserialized Connection response. World: {response.WorldState}. User: {response.UserState}");
+
+            OnWorldStateUpdate?.Invoke(response.WorldState);
+            OnUserStateUpdate?.Invoke(response.UserState);
         });
     }
 
@@ -45,7 +79,7 @@ public class SocketsService : MonoBehaviour
         throw new NotImplementedException();
     }
 
-    public static void SetWorldState(WorldState state)
+    public static void SetWorldState(WorldStateModel stateModel)
     {
         throw new NotImplementedException();
     }

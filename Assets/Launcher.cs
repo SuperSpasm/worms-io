@@ -25,13 +25,13 @@ public class LauncherEditor : Editor
 
 public class Launcher : MonoBehaviour
 {
-    [SerializeField] private string _sceneToLoad;
+    [SerializeField] private int _sceneBuildIndex;
     [SerializeField] private bool _loadOnStart;
 
     [ContextMenu("Load Scene")]
     public void Load()
     {
-        SceneManager.LoadScene(_sceneToLoad);
+        SceneManager.LoadScene(_sceneBuildIndex);
     }
     
     private void Start()
