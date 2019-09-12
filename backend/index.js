@@ -9,25 +9,35 @@ app.get('/', function(req, res) {
     res.send('Hello world!');
 });
 
-const WorldState = {};
-const UserState = {};
-const Explosion = {};
+const Users = [];
+const WorldState = [];
+const UserState = [];
+const Explosion = [];
 
 io.sockets.on('connection', function(socket) {
     console.log('New user connected.');
+    io.emit({
+        WorldState,
+        Users
+    });
 
-    socket.on('users', function(data) {
-        users = usersEvents.do(data);
-        socket.broadcast.emit(users);
+
+    socket.on('add_users', function(data) {
+        Users.push({
+            id: uuid(),
+            ...msg
+        })
+        socket.broadcast.emit(Users);
+    });
+
+    socket.on('world_state', function(data) {
+        WorldState.push(data);
+        socket.broadcast.emit(WorldState);
     });
 
     socket.on('disconnect', function(username) {
         console.log('User disconnected');
     })
-
-    socket.on('chat_message', function(message) {
-        io.emit('chat_message', '<strong>' + socket.username + '</strong>: ' + message);
-    });
 
 });
 
