@@ -24,28 +24,25 @@ io.sockets.on('connection', function(socket) {
             id: uuid(),
             ...msg
         })
-        socket.broadcast.emit(Users);
-    });
-
-    socket.on('world_state', function(data) {
-        WorldState.push(data);
-        socket.broadcast.emit(WorldState);
+        console.log('add_users', data);
+        socket.broadcast.emit('update_users', Users);
     });
 
     socket.on('explosion', function(data) {
-        socket.broadcast.emit(data);
+        console.log('change_user_state', data);
+        WorldState.push(data);
+        socket.broadcast.emit('update_world_state', WorldState);
     });
 
-    socket.on('user_state', function(data) {
-        socket.broadcast.emit(data);
+    socket.on('change_user_state', function(data) {
+        console.log('change_user_state', data);
+        socket.broadcast.emit('update_user_state', data);
     });
 
     socket.on('disconnect', function(username) {
         console.log('User disconnected');
     })
-
 });
-
 
 const server = http.listen(8080, function() {
     console.log('listening on *:8080');
