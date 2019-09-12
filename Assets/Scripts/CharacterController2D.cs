@@ -22,7 +22,9 @@ public class CharacterController2D : MonoBehaviour
 
     private Vector2 velocity;
 	
-	private bool grounded;
+    private bool _grounded;
+	public Transform center;
+	private float _gravityMagnitude = 9.8f;
 
     private void Awake()
     {      
@@ -31,27 +33,34 @@ public class CharacterController2D : MonoBehaviour
 
     private void Update()
     {
+	    Vector2 gravityDirection = center.position - transform.position;
+	    Vector2 velocityDown = Vector2.zero;
+	    Vector2 velocitySide;
+	    
 		float moveInput = Input.GetAxisRaw("Horizontal");
 		
 		// jump
-		if (grounded)
+		if (_grounded)
 		{
-			velocity.y = 0;
+			velocityDown = Vector2.zero;
 			
 			if (Input.GetButtonDown("Jump"))
 			{
 				// Calculate the velocity required to achieve the target jump height.
-				velocity.y = Mathf.Sqrt(2 * jumpHeight * Mathf.Abs(Physics2D.gravity.y));
+				velocityDown = Mathf.Sqrt(jumpHeight) * -gravityDirection.normalized;
 			}
-			
+		}
+		else
+		{
+			velocityDown = gravityDirection.normalized * _gravityMagnitude;
 		}
 		
 		// fall down when in the air
-		velocity.y += Physics2D.gravity.y * Time.deltaTime;
+		Debug.DrawRay(transform.position, gravityDirection);
 		
 		// horizontal movement
-		float acceleration = grounded ? walkAcceleration : airAcceleration;
-		float deceleration = grounded ? groundDeceleration : 0;
+		float acceleration = _grounded ? walkAcceleration : airAcceleration;
+		float deceleration = _grounded ? groundDeceleration : 0;
 
 		// Update the velocity assignment statements to use our selected
 		// acceleration and deceleration values.
@@ -63,12 +72,14 @@ public class CharacterController2D : MonoBehaviour
 		{
 			velocity.x = Mathf.MoveTowards(velocity.x, 0, deceleration * Time.deltaTime);
 		}
+		
+		velocity += velocityDown;
 		transform.Translate(velocity * Time.deltaTime);
 		
 		// collision detection
 		Collider2D[] hits = Physics2D.OverlapBoxAll(transform.position, boxCollider.size, 0);
 		
-		grounded = false;
+		_grounded = false;
 		foreach (Collider2D hit in hits)
 		{
 			if (hit == boxCollider)
@@ -81,12 +92,13 @@ public class CharacterController2D : MonoBehaviour
 				// stop moving on collision
 				transform.Translate(colliderDistance.pointA - colliderDistance.pointB);
 				
-				// detect grounding:  angle between the collision normal and the world up is below 90 and veolcity is downwards
-				if (Vector2.Angle(colliderDistance.normal, Vector2.up) < 90 && velocity.y < 0)
+				// detect grounding:  angle between the collision normal and the world up is below 90 and velocity is downwards
+				if (Vector2.Angle(colliderDistance.normal, -gravityDirection.normalized) < 90&&velocityDown.sqrMagnitude <=0)
 				{
-					grounded = true;
+					_grounded = true;
 				}
 			}
 		}
+
     }
 }
