@@ -1,4 +1,6 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEditor.Presets;
+using UnityEngine;
 
 [RequireComponent(typeof(BoxCollider2D))]
 public class CharacterController2D : MonoBehaviour
@@ -19,6 +21,7 @@ public class CharacterController2D : MonoBehaviour
     float jumpHeight = 4;
 
     private BoxCollider2D boxCollider;
+    private Rigidbody2D rb;
 
     private Vector2 velocity;
 	
@@ -29,31 +32,50 @@ public class CharacterController2D : MonoBehaviour
     private void Awake()
     {      
         boxCollider = GetComponent<BoxCollider2D>();
+        rb = GetComponent<Rigidbody2D>();
+        
     }
 
+
+    private float moveInput;
+    private bool jumpInput;
+    
     private void Update()
     {
+	    moveInput = Input.GetAxisRaw("Horizontal");
+	    jumpInput = Input.GetButtonDown("Jump");
+    }
+
+    private void OnCollisionStay2D(Collision2D other)
+    {
+	    _grounded = true;
+    }
+
+    private void OnCollisionExit(Collision other)
+    {
+	    _grounded = false;
+    }
+
+    private void FixedUpdate()
+    {
 	    Vector2 gravityDirection = center.position - transform.position;
-	    Vector2 velocityDown = Vector2.zero;
-	    Vector2 velocitySide;
+	    Vector2 accelerationSide = Vector2.zero;
+	    transform.rotation = Quaternion.FromToRotation(-Vector3.up, gravityDirection);
 	    
-		float moveInput = Input.GetAxisRaw("Horizontal");
-		
 		// jump
 		if (_grounded)
 		{
-			velocityDown = Vector2.zero;
 			
-			if (Input.GetButtonDown("Jump"))
+			if (jumpInput)
 			{
+				jumpInput = false;
 				// Calculate the velocity required to achieve the target jump height.
-				velocityDown = Mathf.Sqrt(jumpHeight) * -gravityDirection.normalized;
+				rb.AddForce(Mathf.Sqrt(jumpHeight) * -gravityDirection.normalized, ForceMode2D.Impulse);
+				_grounded = false;
 			}
 		}
-		else
-		{
-			velocityDown = gravityDirection.normalized * _gravityMagnitude;
-		}
+		var accelerationDown = gravityDirection.normalized * _gravityMagnitude * rb.mass;
+		rb.AddForce(accelerationDown);
 		
 		// fall down when in the air
 		Debug.DrawRay(transform.position, gravityDirection);
@@ -66,39 +88,39 @@ public class CharacterController2D : MonoBehaviour
 		// acceleration and deceleration values.
 		if (moveInput != 0)
 		{
-			velocity.x = Mathf.MoveTowards(velocity.x, speed * moveInput, acceleration * Time.deltaTime);
+			accelerationSide = speed * moveInput * transform.right;
 		}
 		else
 		{
-			velocity.x = Mathf.MoveTowards(velocity.x, 0, deceleration * Time.deltaTime);
+			//velocity.x = Mathf.MoveTowards(velocity.x, 0, deceleration * Time.deltaTime);
 		}
-		
-		velocity += velocityDown;
-		transform.Translate(velocity * Time.deltaTime);
+		rb.AddForce(accelerationSide);
+		//transform.Translate(velocity * Time.deltaTime);
 		
 		// collision detection
-		Collider2D[] hits = Physics2D.OverlapBoxAll(transform.position, boxCollider.size, 0);
-		
-		_grounded = false;
-		foreach (Collider2D hit in hits)
-		{
-			if (hit == boxCollider)
-				continue;
-
-			ColliderDistance2D colliderDistance = hit.Distance(boxCollider);
-
-			if (colliderDistance.isOverlapped)
-			{
-				// stop moving on collision
-				transform.Translate(colliderDistance.pointA - colliderDistance.pointB);
-				
-				// detect grounding:  angle between the collision normal and the world up is below 90 and velocity is downwards
-				if (Vector2.Angle(colliderDistance.normal, -gravityDirection.normalized) < 90&&velocityDown.sqrMagnitude <=0)
-				{
-					_grounded = true;
-				}
-			}
-		}
+//		Collider2D[] hits = Physics2D.OverlapBoxAll(transform.position, boxCollider.size, 0);
+//		
+//		_grounded = false;
+//		foreach (Collider2D hit in hits)
+//		{
+//			if (hit == boxCollider)
+//				continue;
+//
+//			ColliderDistance2D colliderDistance = hit.Distance(boxCollider);
+//
+//			if (colliderDistance.isOverlapped)
+//			{
+//				// stop moving on collision
+//				//transform.Translate(colliderDistance.pointA - colliderDistance.pointB);
+//				Debug.Log(colliderDistance.pointA - colliderDistance.pointB);
+//				
+//				// detect grounding:  angle between the collision normal and the world up is below 90 and velocity is downwards
+//				if (Vector2.Angle(colliderDistance.normal, -gravityDirection.normalized) < 90)
+//				{
+//					_grounded = true;
+//				}
+//			}
+//		}
 
     }
 }
