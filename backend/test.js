@@ -10,13 +10,13 @@ const opts = {
 };
 
 describe("async test with socket.io", function () {
-    //this.timeout(10000);
+    this.timeout(10000);
 
     it('Response should be an object', function (done) {
         setTimeout(function () {
             const socket_client = socketio_client(end_point, opts);
 
-            let aaa = socket_client.emit('world_state', 'ABCDEF');
+            let aaa = socket_client.emit('game_start', 'ABCDEF');
             console.log(aaa);
 
             socket_client.on('event response', function (data) {
